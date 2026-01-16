@@ -144,7 +144,7 @@ void updateMotors() {
     int randomNumber = random(1, 3);
 
     if (randomNumber == 1){
-
+      Serial.println("RandomNumber: " + randomNumber);
       m1->setSpeed(motorSpeed * 1.5); m2->setSpeed(motorSpeed * 1.5);
 
       m1->run(BACKWARD); m2->run(BACKWARD);
@@ -153,6 +153,8 @@ void updateMotors() {
       readSensorWithIgnore(rightSensorIgnoreUntil, 2000);
     }
     else {
+      Serial.println("RandomNumber: " + randomNumber);
+
       m1->run(FORWARD); m2->run(FORWARD);
       m3->run(BACKWARD); m4->run(BACKWARD);
       Serial.println("Auto: TURN RIGHT");
