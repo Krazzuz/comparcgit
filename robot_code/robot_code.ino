@@ -86,82 +86,83 @@ void ignoreSensorFor(unsigned long &sensorTimer, int milliseconds){
   sensorTimer = millis() + milliseconds;
 }
 
+// --- Hilfsfunktionen (Korrigiert, falls du sie später brauchst) ---
+void setSensorIgnore(unsigned long &sensorTimer, int milliseconds){
+  sensorTimer = millis() + milliseconds;
+}
+
 bool isSensorIgnored(unsigned long sensorTimer){
   return millis() < sensorTimer;
 }
 
-int readSensorWithIgnore(int pin, unsigned long ignoreTimer){
-  if (isSensorIgnored(ignoreTimer)){
-    return LOW;
-  }
-  return digitalRead(pin);
-}
-
+// --- Hauptlogik ---
 void updateMotors() {
   if (!motorsEnabled) {
-    // When in manual mode, the motors are controlled by executeManualCommand,
-    // so we just ensure they are released in the main loop.
-    m1->run(RELEASE);
-    m2->run(RELEASE);
-    m3->run(RELEASE);
-    m4->run(RELEASE);
+    m1->run(RELEASE); m2->run(RELEASE);
+    m3->run(RELEASE); m4->run(RELEASE);
     return;
   }
 
-  // --- Autonomous Line Following Logic ---
+  // Sensoren lesen
   int rightSensor = digitalRead(IR_SENSOR_D2);
   int leftSensor = digitalRead(IR_SENSOR_D3);
   int middleSensor = digitalRead(IR_SENSOR_MIDDLE);
 
+  // Basis-Geschwindigkeit setzen
   m1->setSpeed(motorSpeed); m2->setSpeed(motorSpeed);
   m3->setSpeed(motorSpeed); m4->setSpeed(motorSpeed);
 
-  if (leftSensor == LOW && rightSensor == LOW) {
-    m1->run(FORWARD); m2->run(FORWARD); m3->run(FORWARD); m4->run(FORWARD);
-    Serial.println("Auto: FORWARD");
-  }
-  else if (middleSensor == LOW && rightSensor == HIGH) {
-    bool rightSensorBlack = true;
-    if(rightSensorBlack){
-      m1->run(FORWARD); m2->run(FORWARD);
-      m3->run(BACKWARD); m4->run(BACKWARD);
-      Serial.println("Auto: TURN RIGHT");
-
-    }
-  }
-  else if (middleSensor == LOW && leftSensor == HIGH) {
-    bool leftSensorBlack = true;
-    if (leftSensorBlack){
-      m1->setSpeed(motorSpeed * 1.5); m2->setSpeed(motorSpeed * 1.5);
-
-      m1->run(BACKWARD); m2->run(BACKWARD);
-      m3->run(FORWARD); m4->run(FORWARD);
-      Serial.println("Auto: TURN LEFT");
-    }
-  }
-
-  else if (leftSensor == HIGH && rightSensor == HIGH){
+  // --- Logik-Prioritäten ---
+  
+  // 1. KREUZUNG (Beide Sensoren auf Schwarz/HIGH)
+  // Wichtig: Das muss ZUERST geprüft werden!
+  if (leftSensor == HIGH && rightSensor == HIGH) {
     int randomNumber = random(1, 3);
+    
+    // Geschwindigkeit für Drehung erhöhen
+    m1->setSpeed(motorSpeed * 1.5); m2->setSpeed(motorSpeed * 1.5); 
+    m3->setSpeed(motorSpeed * 1.5); m4->setSpeed(motorSpeed * 1.5);
 
-    if (randomNumber == 1){
-      Serial.println("RandomNumber: " + randomNumber);
-      m1->setSpeed(motorSpeed * 1.5); m2->setSpeed(motorSpeed * 1.5);
-
-      m1->run(BACKWARD); m2->run(BACKWARD);
-      m3->run(FORWARD); m4->run(FORWARD);
-      Serial.println("Auto: TURN LEFT");
-      readSensorWithIgnore(rightSensorIgnoreUntil, 2000);
+    if (randomNumber == 1) {
+      Serial.println("Junction: Random TURN LEFT");
+      // Links drehen
+      m1->run(BACKWARD); m2->run(BACKWARD); // Rechts zurück
+      m3->run(FORWARD);  m4->run(FORWARD);  // Links vor
+    } else {
+      Serial.println("Junction: Random TURN RIGHT");
+      // Rechts drehen
+      m1->run(FORWARD);  m2->run(FORWARD);  // Rechts vor
+      m3->run(BACKWARD); m4->run(BACKWARD); // Links zurück
     }
-    else {
-      Serial.println("RandomNumber: " + randomNumber);
-
-      m1->run(FORWARD); m2->run(FORWARD);
-      m3->run(BACKWARD); m4->run(BACKWARD);
-      Serial.println("Auto: TURN RIGHT");
-      readSensorWithIgnore(leftSensorIgnoreUntil, 2000);
-
-
-    }
+    
+    // WICHTIG: Kurze Zeit warten, damit der Roboter die Drehung auch ausführt
+    // und nicht sofort wieder in die Logik springt (verhindert das Zittern).
+    delay(400); 
+    
+    // Nach dem Delay kurz stoppen oder Sensoren "freigeben"
+    // (Hier nicht zwingend nötig, da er im nächsten Loop neu prüft)
+  }
+  
+  // 2. KORREKTUR RECHTS (Rechter Sensor auf Schwarz)
+  else if (rightSensor == HIGH) {
+    // Nur korrigieren, wenn wir nicht gerade eine Kreuzung ignorieren sollten
+    m1->run(FORWARD);  m2->run(FORWARD);
+    m3->run(BACKWARD); m4->run(BACKWARD);
+    Serial.println("Auto: CORRECTION RIGHT");
+  }
+  
+  // 3. KORREKTUR LINKS (Linker Sensor auf Schwarz)
+  else if (leftSensor == HIGH) {
+    m1->run(BACKWARD); m2->run(BACKWARD);
+    m3->run(FORWARD);  m4->run(FORWARD);
+    Serial.println("Auto: CORRECTION LEFT");
+  }
+  
+  // 4. GERADEAUS (Standard: Beide Sensoren auf Weiß/LOW)
+  else {
+    m1->run(FORWARD); m2->run(FORWARD); 
+    m3->run(FORWARD); m4->run(FORWARD);
+    Serial.println("Auto: FORWARD");
   }
 }
 
