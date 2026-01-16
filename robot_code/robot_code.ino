@@ -115,35 +115,61 @@ void updateMotors() {
   // --- Logik-Prioritäten ---
   
   // 1. KREUZUNG (Beide Sensoren auf Schwarz/HIGH)
-  // Wichtig: Das muss ZUERST geprüft werden!
   if (leftSensor == HIGH && rightSensor == HIGH) {
-    int randomNumber = random(1, 3);
+    // Zufallszahl 1 bis 3 (1, 2 oder 3)
+    // 1 = Links, 2 = Rechts, 3 = Geradeaus
+    int randomNumber = random(1, 4); 
     
-    // Geschwindigkeit für Drehung erhöhen
-    m1->setSpeed(motorSpeed * 1.5); m2->setSpeed(motorSpeed * 1.5); 
-    m3->setSpeed(motorSpeed * 1.5); m4->setSpeed(motorSpeed * 1.5);
+    // Berechne die Geschwindigkeiten für Kurven
+    int fastSpeed = motorSpeed * 1.5;
+    if (fastSpeed > 240) fastSpeed = 240;
+    int slowSpeed = fastSpeed / 2; 
 
     if (randomNumber == 1) {
-      Serial.println("Junction: Random TURN LEFT");
-      // Links drehen
-      m1->run(BACKWARD); m2->run(BACKWARD); // Rechts zurück
-      m3->run(FORWARD);  m4->run(FORWARD);
-        // Links vor
+      // --- LINKSKURVE ---
+      Serial.println("Junction: Random TURN LEFT (Curve)");
+      m1->setSpeed(fastSpeed); m2->setSpeed(fastSpeed);
+      m1->run(FORWARD); m2->run(FORWARD);
+      
+      m3->setSpeed(slowSpeed); m4->setSpeed(slowSpeed);
+      m3->run(BACKWARD); m4->run(BACKWARD);
+      
+      delay(750); // Zeit für die Kurve
+
+    } else if (randomNumber == 2) {
+      // --- RECHTSKURVE ---
+      Serial.println("Junction: Random TURN RIGHT (Curve)");
+      m1->setSpeed(slowSpeed); m2->setSpeed(slowSpeed);
+      m1->run(BACKWARD); m2->run(BACKWARD);
+      
+      m3->setSpeed(fastSpeed); m4->setSpeed(fastSpeed);
+      m3->run(FORWARD); m4->run(FORWARD);
+      
+      delay(750); // Zeit für die Kurve
+
     } else {
-      Serial.println("Junction: Random TURN RIGHT");
-      // Rechts drehen
-      m1->run(FORWARD);  m2->run(FORWARD);  // Rechts vor
-      m3->run(BACKWARD); m4->run(BACKWARD); // Links zurück
+      // --- GERADEAUS ---
+      Serial.println("Junction: Random STRAIGHT");
+      
+      // Standard-Geschwindigkeit nutzen
+      m1->setSpeed(motorSpeed); m2->setSpeed(motorSpeed);
+      m3->setSpeed(motorSpeed); m4->setSpeed(motorSpeed);
+      
+      // Einfach alle vorwärts
+      m1->run(FORWARD); m2->run(FORWARD);
+      m3->run(FORWARD); m4->run(FORWARD);
+      
+      // Kürzere Zeit! Wir müssen nur über die schwarze Querlinie kommen.
+      // 1000ms wäre hier viel zu lang.
+      delay(400); 
     }
     
-    // WICHTIG: Kurze Zeit warten, damit der Roboter die Drehung auch ausführt
-    // und nicht sofort wieder in die Logik springt (verhindert das Zittern).
-    delay(2000); 
-    
-    // Nach dem Delay kurz stoppen oder Sensoren "freigeben"
-    // (Hier nicht zwingend nötig, da er im nächsten Loop neu prüft)
+    // Nach dem Manöver kurz entspannen
+    m1->run(RELEASE); m2->run(RELEASE);
+    m3->run(RELEASE); m4->run(RELEASE);
+    delay(100);
   }
-  
+
   // 2. KORREKTUR RECHTS (Rechter Sensor auf Schwarz)
   else if (rightSensor == HIGH) {
     // Nur korrigieren, wenn wir nicht gerade eine Kreuzung ignorieren sollten
