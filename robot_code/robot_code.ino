@@ -115,7 +115,38 @@ void updateMotors() {
   // --- Logik-Prioritäten ---
   
   // 1. KREUZUNG (Beide Sensoren auf Schwarz/HIGH)
-  if (leftSensor == HIGH && rightSensor == HIGH) {
+  if (leftSensor == HIGH && rightSensor == HIGH && middleSensor == LOW){
+    int randomNumber = random(1,3);
+
+    int fastSpeed = motorSpeed * 1.5;
+    if (fastSpeed > 240) fastSpeed = 240;
+    int slowSpeed = fastSpeed / 2; 
+
+        if (randomNumber == 1) {
+      // --- LINKSKURVE ---
+      Serial.println("Junction: Random TURN LEFT (Curve)");
+      m1->setSpeed(fastSpeed); m2->setSpeed(fastSpeed);
+      m1->run(FORWARD); m2->run(FORWARD);
+      
+      m3->setSpeed(slowSpeed); m4->setSpeed(slowSpeed);
+      m3->run(BACKWARD); m4->run(BACKWARD);
+      
+      delay(750); // Zeit für die Kurve
+
+    } 
+    else if (randomNumber == 2) {
+      // --- RECHTSKURVE ---
+      Serial.println("Junction: Random TURN RIGHT (Curve)");
+      m1->setSpeed(slowSpeed); m2->setSpeed(slowSpeed);
+      m1->run(BACKWARD); m2->run(BACKWARD);
+      
+      m3->setSpeed(fastSpeed); m4->setSpeed(fastSpeed);
+      m3->run(FORWARD); m4->run(FORWARD);
+      
+      delay(750); // Zeit für die Kurve
+    }
+  }
+  if (leftSensor == HIGH && rightSensor == HIGH && middleSensor == HIGH) {
     // Zufallszahl 1 bis 3 (1, 2 oder 3)
     // 1 = Links, 2 = Rechts, 3 = Geradeaus
     int randomNumber = random(1, 4); 
