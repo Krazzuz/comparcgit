@@ -70,3 +70,7 @@ The `robot_code.ino` file includes:
 - `makePage()`: Generates the HTML, CSS, and JavaScript for the web interface.
 
 ![Wiring Schematic](./assets/1.png)
+![Wiring Schematic](./assets/2.png)
+![Wiring Schematic](./assets/3.png)
+![Wiring Schematic](./assets/4.png)
+![Wiring Schematic](./assets/5.png)
