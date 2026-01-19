@@ -69,6 +69,8 @@ The `robot_code.ino` file includes:
 - `executeManualCommand()`: Handles manual control logic.
 - `makePage()`: Generates the HTML, CSS, and JavaScript for the web interface.
 
+## Pictures
+
 ![Wiring Schematic](./assets/1.png)
 ![Wiring Schematic](./assets/2.png)
 ![Wiring Schematic](./assets/3.png)
